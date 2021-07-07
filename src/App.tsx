@@ -1,26 +1,55 @@
-import React from 'react';
-import logo from './logo.svg';
+import React, { useEffect, useState } from 'react';
+import { SignupForm } from './componets/SignUpForm';
 import './App.css';
+import { Profile } from './componets/Profile';
+import { useCookies } from 'react-cookie';
+import { IProfileData } from './componets/Profile';
 
-function App() {
+// interface IProfileAuthUser {
+//   date: {
+//     tokenType?: string;
+//     espiresAt?: string;
+//     accessToken?: string;
+//     refreshToken?: string;
+//   },
+// };
+
+export default () => {
+  const [state, setState] = useState<IProfileData>();
+  const [cookies] = useCookies(['data']);
+
+  async function GET() {
+    try {
+      const response = await fetch('https://tager.dev.ozitag.com/api/tager/user/profile', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${cookies['data'].accessToken}`
+        }
+      });
+
+      if (response.ok) {
+        let responseJson = await response.json()
+        setState(responseJson.data);
+      }
+      else alert('Email or password entered incorrectly ')
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  useEffect(() => {
+    if (!cookies.data) {
+      setState(undefined);
+    } else {
+      GET();
+    }
+  }, [cookies]);
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      {!state?<SignupForm /> : 
+      <Profile email={state?.email} name={state?.name} />}
     </div>
   );
 }
-
-export default App;
